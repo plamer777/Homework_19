@@ -1,15 +1,22 @@
+"""This unit contains CBVs to process requests like /movies/ and /movies/1"""
 from flask import request
 from flask_restx import Resource, Namespace
-
-from dao.model.movie import MovieSchema
-from implemented import movie_service
-
+from implemented import movie_service, auth_service
+# -----------------------------------------------------------------------
 movie_ns = Namespace('movies')
+# -----------------------------------------------------------------------
 
 
 @movie_ns.route('/')
 class MoviesView(Resource):
+    """The MoviesView is a CBV to process requests like /movies/"""
+    @auth_service.auth_required
     def get(self):
+        """This method processes GET requests
+
+        :returns:
+            a result of the GET request
+        """
         director = request.args.get("director_id")
         genre = request.args.get("genre_id")
         year = request.args.get("year")
@@ -18,30 +25,57 @@ class MoviesView(Resource):
             "genre_id": genre,
             "year": year,
         }
-        all_movies = movie_service.get_all(filters)
-        res = MovieSchema(many=True).dump(all_movies)
-        return res, 200
 
+        all_movies = movie_service.get_all(filters)
+
+        return all_movies
+
+    @auth_service.admin_required
     def post(self):
+        """This method processes POST requests
+
+        :returns:
+            a result of the POST request with 'location' header
+        """
         req_json = request.json
-        movie = movie_service.create(req_json)
-        return "", 201, {"location": f"/movies/{movie.id}"}
+        result = movie_service.create(req_json)
+
+        return result
 
 
 @movie_ns.route('/<int:bid>')
 class MovieView(Resource):
-    def get(self, bid):
-        b = movie_service.get_one(bid)
-        sm_d = MovieSchema().dump(b)
-        return sm_d, 200
+    """The MovieView is a CBV to process requests like /movies/{bid}"""
+    @auth_service.auth_required
+    def get(self, bid: int):
+        """This method processes GET requests
 
-    def put(self, bid):
+        :returns:
+            a result of the GET request
+        """
+        movie = movie_service.get_one(bid)
+
+        return movie
+
+    @auth_service.admin_required
+    def put(self, bid: int):
+        """This method processes PUT requests
+
+        :returns:
+            a result of the operation
+        """
         req_json = request.json
-        if "id" not in req_json:
-            req_json["id"] = bid
-        movie_service.update(req_json)
-        return "", 204
+        result = movie_service.update(bid, req_json)
 
-    def delete(self, bid):
-        movie_service.delete(bid)
-        return "", 204
+        return result
+
+    @auth_service.admin_required
+    def delete(self, bid: int):
+        """This method processes DELETE requests
+
+        :returns:
+            a result of the DELETE request
+        """
+        result = movie_service.delete(bid)
+
+        return result

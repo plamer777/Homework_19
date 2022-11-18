@@ -1,9 +1,12 @@
+"""This unit contains Movie and a MovieSchema classes to work with movie
+table"""
 from marshmallow import Schema, fields
-
 from setup_db import db
+# -----------------------------------------------------------------------
 
 
 class Movie(db.Model):
+    """The Movie class is a model to work with movie table"""
     __tablename__ = 'movie'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255))
@@ -18,6 +21,8 @@ class Movie(db.Model):
 
 
 class MovieSchema(Schema):
+    """The MovieSchema class is a schema to serialize and deserialize
+    movie models"""
     id = fields.Int()
     title = fields.Str()
     description = fields.Str()
